@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>和陶舟对话</title>
+  <meta charset="UTF-8">
+</head>
+
+<body background="Background.png">
+    <h1 align="center" style="color:crimson">和陶舟一起学习国际主义。</h1>
+    
+    <p>歡迎使用第六國際——進步國際的單人交流平臺。您可以於此和電子模擬的書記陶舟交流。</p>
+    <p>Welcome to Sixth International -- Progressive International's chat platform.</p>
+
+    <textarea id="toTao" name="toTao" rows="15" cols="80" placeholder="对陶舟说：“……”" 
+    style="font-size:16px"></textarea>
+    <br>
+    <input type="button" value="陶舟，你怎么看？" onclick="changeCell('e')"">
+    
+    <br>
+    <br>
+
+    <input type="checkbox" id="toTaoKeyCheck" name="toTaoKeyCheck" onclick="changeKeyInput(this.name, this.checked)">
+    <input type="text" id="toTaoKey" name="toTaoKey" placeholder="你的笔名" style="text-align:center" disabled>
+    
+    <br>
+    <br>
+
+    <input type="radio" id="noCap" name="cCap" checked="checked" value="0">
+    <label for="noCap">无字数限制</label>
+    <input type="radio" id="twitCap" name="cCap" value="140">
+    <label for="twitCap">微博/Twitter（140字）</label>
+    <input type="radio" id="discCap" name="cCap" value="2000">
+    <label for="discCap">朋友圈/Discord（2000字）</label>
+    <input type="radio" id="weCap" name="cCap" value="2048">
+    <label for="weCap">微信（2048字）</label>
+    <input type="radio" id="qqCap" name="cCap" value="4500">
+    <label for="qqCap">QQ（4500字）</label>
+
+    <br>
+    <br>
+
+    <textarea id="fromTao" name="fromTao" rows="15" cols="80" placeholder="听陶舟说：“……”" 
+    style="font-size:16px"></textarea>
+    <br>
+    <input type="button" value="你说什么，陶舟？" onclick="changeCell('d')">
+
+    <br>
+    <br>
+
+    <input type="checkbox" id="toTaoKeyCheck" name="fromTaoKeyCheck" onclick="changeKeyInput(this.name, this.checked)">
+    <input type="number" id="fromTaoKey" name="fromTaoKey" placeholder="密码子" style="text-align:center" disabled>
+</body>
+
+
+<script src="scripts.bad.js"></script>
+<script src="BASE64.js"></script>
+<script src="crypto-js.min.js"></script>
+<script src="md5.min.js"></script>
