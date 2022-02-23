@@ -23,10 +23,10 @@ function decryptByDES(ciphertext, key) {
     return result_value;
 }
 
-function getPadding(num, len) {
+function getPadding(num, totalLen) {
     var padding = '';
-    padding = '0'.repeat(len) + num.toString();
-    return padding.substr(-len);
+    padding = '0'.repeat(totalLen) + num.toString();
+    return padding.slice(-totalLen);
 }
 
 function getEncode(text, key = '') {
@@ -50,7 +50,7 @@ function getEncode(text, key = '') {
     var hexText = '';
     var hexChar = '';
     for (let i = 0; i < base64Text.length; i++) {
-        hexChar = base64Text.substr(i, 1).charCodeAt();
+        hexChar = base64Text.slice(i, i + 1).charCodeAt();
         hexText += hexChar.toString(16);
     }
 
@@ -79,7 +79,7 @@ function getEncode(text, key = '') {
         }
         else {
             if (zeroCount != 0) {
-                multipleCode += zeroCount.toString(6).replace('0', '6'); // single digit cannot excede 6, 6 used for 0
+                multipleCode += replaceAll(zeroCount.toString(6), '0', '6'); // single digit cannot excede 6, 6 used for 0
                 zeroCount = 0;
             }
             multipleCode += '0'; // '0' represents a 1 in the sequence, ironic
@@ -87,7 +87,7 @@ function getEncode(text, key = '') {
     }
     // handles 0s at the end of the sequence
     if (zeroCount != 0) {
-        multipleCode += zeroCount.toString(6).replace('0', '6');
+        multipleCode += replaceAll(zeroCount.toString(6), '0', '6');
         zeroCount = 0;
     }
 
@@ -110,11 +110,16 @@ function getEncode(text, key = '') {
         for (let i = 0; i < idCode.length / 4; i++) {
             idText += String.fromCharCode(parseInt(idCode.substring(i * 4, i * 4 + 4), 16) + uniChnStart);
         }
-        alert('请牢记密码子：' + idText.length.toString);
+        alert('请牢记密码子：' + idText.length.toString());
     }
 
     //return
-    return uniText + multipleText + idText;
+    if (key === '') {
+        return uniText + multipleText + idText;
+    }
+    else {
+        return getRearrangement(uniText + multipleText, parseInt(key.slice(0, 1), 16) + 1) + idText;
+    }
 }
 
 function getDecode(text, idLength, key = '') {
@@ -122,21 +127,26 @@ function getDecode(text, idLength, key = '') {
     const uniChnLen = 0x6bc0; // 3400 ~ 9FBF
     var digit = '';
 
+    if (key != '') {
+        text = getRevertRearragement(text.slice(0, text.length - idLength),
+            parseInt(key.slice(0, 1), 16) + 1) + text.slice(-idLength);
+    }
+
     // get idText
-    var idText = text.substr(-idLength, idLength);
+    var idText = text.slice(-idLength);
     var idCode = '';
-    for (let i = 0; i < idText.length; i++) {
-        digit = (idText.charCodeAt() - uniChnStart).toString(16);
+    for (let i = 0; i < idLength; i++) {
+        digit = (idText.slice(i, i + 1).charCodeAt() - uniChnStart).toString(16);
         idCode += '0'.repeat(4 - digit.length) + digit;
     }
-    var multipleFiller = parseInt(idCode.substr(-1, 1));
+    var multipleFiller = parseInt(idCode.slice(-1));
     var multipleTextLength = parseInt(idCode.substring(0, idCode.length - 1), 7);
 
     // get multipleText
-    var multipleText = text.substr(-1 - multipleTextLength, multipleTextLength);
+    var multipleText = text.slice(-idLength - multipleTextLength, -idLength);
     var multipleCode = '';
     for (let i = 0; i < multipleText.length; i++) {
-        digit = (multipleText.substr(i, 1).charCodeAt() - uniChnStart).toString(16);
+        digit = (multipleText.slice(i, i + 1).charCodeAt() - uniChnStart).toString(16);
         multipleCode += '0'.repeat(4 - digit.length) + digit;
     }
     multipleCode = multipleCode.substring(0, multipleCode.length - multipleFiller)
@@ -145,9 +155,9 @@ function getDecode(text, idLength, key = '') {
     var uniMultiples = [];
     digit = '';
     for (let i = 0; i < multipleCode.length; i++) {
-        if (multipleCode.substr(i, 1) === '0') {
+        if (multipleCode.slice(i, i + 1) === '0') {
             if (digit != '') {
-                digit = digit.replace('6', '0');
+                digit = replaceAll(digit, '6', '0');
                 zeroCount = parseInt(digit, 6);
                 for (let j = 0; j < zeroCount; j++) {
                     uniMultiples.push(0);
@@ -157,12 +167,11 @@ function getDecode(text, idLength, key = '') {
             uniMultiples.push(1);
         }
         else {
-            digit += multipleCode.substr(i, 1);
-            zeroCount = parseInt(multipleCode.substr)
+            digit += multipleCode.slice(i, i + 1);
         }
     }
     if (digit != '') {
-        digit = digit.replace('6', '0');
+        digit = replaceAll(digit, '6', '0');
         zeroCount = parseInt(digit, 6);
         for (let j = 0; j < zeroCount; j++) {
             uniMultiples.push(0);
@@ -176,8 +185,9 @@ function getDecode(text, idLength, key = '') {
 
     // get hexText
     var hexText = '';
+    var uniData = 0;
     for (let i = 0; i < uniText.length; i++) {
-        var uniData = uniText.substr(i, 1).charCodeAt() - uniChnStart + uniChnLen * uniMultiples[i];
+        uniData = uniText.slice(i, i + 1).charCodeAt() - uniChnStart + uniChnLen * uniMultiples[i];
         uniData = uniData.toString(16);
         hexText += uniData;
     }
@@ -185,7 +195,7 @@ function getDecode(text, idLength, key = '') {
     // get base64Text
     var base64Text = '';
     for (let i = 0; i < hexText.length / 2; i++) {
-        base64Text += String.fromCharCode(parseInt(hexText.substr(2 * i, 2), 16));
+        base64Text += String.fromCharCode(parseInt(hexText.slice(2 * i, 2 * i + 2), 16));
     }
 
     // get original text
@@ -199,6 +209,7 @@ function getDecode(text, idLength, key = '') {
 }
 
 function getText(text, mode) {
+    console.log('陶舟在想怎么说。')
     var new_text = '';
     if (mode === 'en') {
         // get char cap
@@ -218,7 +229,7 @@ function getText(text, mode) {
             var maxPara = Math.ceil(text.length / (cCap - 14));
             for (let i = 0; i < maxPara - 1; i++) {
                 para++;
-                new_text += '陶舟说：“' + text.substr(i * (cCap - 14), cCap - 14)
+                new_text += '陶舟说：“' + text.slice(i * (cCap - 14), (i + 1) * (cCap - 14))
                     + '。”（' + getPadding(para, 2) + '/' + getPadding(maxPara, 2)
                     + '）\n';
             }
@@ -247,7 +258,7 @@ function getText(text, mode) {
             var maxPara = Math.ceil(text.length / (cCap - 17));
             for (let i = 0; i < maxPara - 1; i++) {
                 para++;
-                new_text += '陶舟对某某说：“' + text.substr(i * (cCap - 17), cCap - 17)
+                new_text += '陶舟对某某说：“' + text.slice(i * (cCap - 17), (i + 1) * (cCap - 17))
                     + '。”（' + getPadding(para, 2) + '/' + getPadding(maxPara, 2)
                     + '）\n';
             }
@@ -265,6 +276,7 @@ function getText(text, mode) {
             new_text += new_texts[i].substring(new_texts[i].lastIndexOf('“') + 1, new_texts[i].lastIndexOf('。'));
         }
     }
+    console.log('陶舟是这样说的。')
     return new_text;
 }
 
@@ -275,7 +287,7 @@ function changeCell(mode) {
         var key = '';
         if (document.getElementById('toTaoKey').disabled === false) {
             if (document.getElementById('toTaoKey').value != '') {
-                key = md5(document.getElementById('toTaoKey').value).substring(11, 19);
+                key = md5(document.getElementById('toTaoKey').value);
             }
         }
         new_text = getEncode(text, key);
@@ -290,12 +302,13 @@ function changeCell(mode) {
 
         document.getElementById('fromTao').value = getText(new_text, textMode);
     }
+
     else if (mode === 'd') {
         var text = document.getElementById('fromTao').value;
-        var length = 1;
+        var idLength = 1;
         if (document.getElementById('fromTaoKey').disabled === false) {
             if (document.getElementById('fromTaoKey').value != '') {
-                length = parseInt(document.getElementById('fromTaoKey').value);
+                idLength = parseInt(document.getElementById('fromTaoKey').value);
             }
         }
 
@@ -304,10 +317,10 @@ function changeCell(mode) {
             key = '';
         }
         else {
-            key = md5(sampleText.substring(3, sampleText.lastIndexOf('说'))).substring(11, 19);
+            key = md5(sampleText.substring(3, sampleText.lastIndexOf('说')));
         }
 
-        new_text = getDecode(getText(text, 'd'), length, key);
+        new_text = getDecode(getText(text, 'd'), idLength, key);
         document.getElementById('toTao').value = new_text;
     }
 
@@ -320,6 +333,50 @@ function changeKeyInput(name, status) {
     if (name === 'fromTaoKeyCheck') {
         document.getElementById('fromTaoKey').disabled = (!status);
     }
+}
+
+function getRearrangement(text, step) {
+    var chars = text.split('');
+    var new_chars = [];
+    var pos = 0;
+    while (new_chars.length < text.length) {
+        while (pos < chars.length) {
+            new_chars.push(chars.splice(pos, 1)[0]);
+            pos += step - 1;
+        }
+        pos = 0;
+    }
+    return new_chars.join('');
+}
+
+function getRevertRearragement(text, step) {
+    var chars = text.split('');
+    var ori_chars = Array(chars.length);
+    var segment = [];
+    var seg_count = 0;
+    var blank_count = 0;
+    while (chars.length > 0) {
+        segment = chars.splice(0, Math.max(Math.floor((chars.length - 1) / step), 0) + 1);
+        blank_count = step - 1;
+        for (let i = seg_count; segment.length > 0; i++) {
+            if (ori_chars[i] === undefined) {
+                blank_count++;
+                if (blank_count === step) {
+                    ori_chars[i] = segment.shift();
+                    blank_count = 0;
+                }
+            }
+        }
+        seg_count++;
+    }
+    return ori_chars.join('');
+}
+
+function replaceAll(text, search, replace) {
+    while (text.indexOf(search) != -1) {
+        text = text.replace(search, replace);
+    }
+    return text;
 }
 
 function BASE64() {
