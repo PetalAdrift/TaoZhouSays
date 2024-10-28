@@ -1,3 +1,3 @@
 # TaoZhouSays
 
-Online version: https://mfgjt.github.io/TaoZhouSays/
+Online version: https://petaladrift.github.io/TaoZhouSays/
